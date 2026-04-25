@@ -99,18 +99,18 @@ func Print(w io.Writer, stats *parser.BuildStats, diffs []AssetDiff, budget floa
 		// Pad raw strings BEFORE applying color — ANSI codes inflate byte
 		// length so fmt width verbs break alignment if you colorize first.
 		paddedSize := fmt.Sprintf("%8s", formatBytes(d.Size))
-		paddedDiff := fmt.Sprintf("%-28s", rawDiff(d))
+		raw := rawDiff(d)
 
 		var coloredDiff string
 		switch {
 		case !d.HasBaseline:
-			coloredDiff = dim(paddedDiff)
+			coloredDiff = dim(raw)
 		case d.ExceedsBudget:
-			coloredDiff = red(paddedDiff)
+			coloredDiff = red(raw)
 		case d.Delta > 0:
-			coloredDiff = yellow(paddedDiff)
+			coloredDiff = yellow(raw)
 		default:
-			coloredDiff = green(paddedDiff)
+			coloredDiff = green(raw)
 		}
 
 		status := green("✓")
