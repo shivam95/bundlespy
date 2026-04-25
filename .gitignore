@@ -1,0 +1,11 @@
+# compiled binary (root-level only)
+/bundlespy
+/bundlespy-*
+/dist/
+
+# baseline files (project-specific, not checked in)
+.bundlespy-*.json
+
+# Go build cache
+*.test
+*.out
