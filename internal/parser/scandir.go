@@ -7,10 +7,27 @@ import (
 	"strings"
 )
 
-// ScanDir walks a build output directory and returns the sizes of all files.
-// Source maps (.map) are excluded — they are not served to users.
+// DefaultExtensions is the allowlist of file extensions bundlespy tracks by default.
+// Override per-invocation with the --ext flag.
+var DefaultExtensions = []string{
+	// JavaScript
+	".js", ".mjs", ".cjs",
+	// CSS
+	".css",
+	// Images
+	".webp", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".avif",
+	// Fonts
+	".woff", ".woff2", ".ttf", ".eot", ".otf",
+}
+
+// ScanDir walks a build output directory and returns the sizes of tracked files.
+// Only extensions in exts are included; pass nil to use DefaultExtensions.
 // Asset names are stored relative to dir so baselines are portable across machines.
-func ScanDir(dir string) (*BuildStats, error) {
+func ScanDir(dir string, exts []string) (*BuildStats, error) {
+	if len(exts) == 0 {
+		exts = DefaultExtensions
+	}
+
 	var assets []Asset
 
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
@@ -20,16 +37,17 @@ func ScanDir(dir string) (*BuildStats, error) {
 		if d.IsDir() {
 			return nil
 		}
-		if strings.HasSuffix(path, ".map") {
-			return nil
-		}
 
-		info, err := d.Info()
+		rel, err := filepath.Rel(dir, path)
 		if err != nil {
 			return err
 		}
 
-		rel, err := filepath.Rel(dir, path)
+		if !shouldInclude(rel, exts) {
+			return nil
+		}
+
+		info, err := d.Info()
 		if err != nil {
 			return err
 		}
@@ -50,6 +68,17 @@ func ScanDir(dir string) (*BuildStats, error) {
 	}
 
 	return &BuildStats{Tool: "dir", Assets: assets}, nil
+}
+
+// shouldInclude returns true if the file's extension is in the allowlist.
+func shouldInclude(name string, exts []string) bool {
+	ext := strings.ToLower(filepath.Ext(name))
+	for _, e := range exts {
+		if ext == e {
+			return true
+		}
+	}
+	return false
 }
 
 // isChunk returns true for JS and CSS files — the assets that drive bundle size.

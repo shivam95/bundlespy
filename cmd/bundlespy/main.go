@@ -33,12 +33,13 @@ func newAnalyzeCmd() *cobra.Command {
 	var dir, baselinePath, format string
 	var budget float64
 	var top int
+	var ext []string
 
 	cmd := &cobra.Command{
 		Use:   "analyze",
 		Short: "Analyze a build output directory and report asset sizes",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			stats, err := parser.ScanDir(dir)
+			stats, err := parser.ScanDir(dir, ext)
 			if err != nil {
 				return err
 			}
@@ -74,6 +75,7 @@ func newAnalyzeCmd() *cobra.Command {
 	cmd.Flags().Float64Var(&budget, "budget", 0, "max allowed % size increase per asset (e.g. 5)")
 	cmd.Flags().IntVar(&top, "top", 0, "show only the N largest assets")
 	cmd.Flags().StringVar(&format, "format", "text", "output format: text or json")
+	cmd.Flags().StringSliceVar(&ext, "ext", nil, "file extensions to include, e.g. --ext .js,.css (default: js,css,images,fonts)")
 	cmd.MarkFlagRequired("dir")
 
 	return cmd
@@ -81,12 +83,13 @@ func newAnalyzeCmd() *cobra.Command {
 
 func newBaselineCmd() *cobra.Command {
 	var dir, outPath string
+	var ext []string
 
 	cmd := &cobra.Command{
 		Use:   "baseline",
 		Short: "Save current build output as a baseline snapshot",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			stats, err := parser.ScanDir(dir)
+			stats, err := parser.ScanDir(dir, ext)
 			if err != nil {
 				return err
 			}
@@ -102,6 +105,7 @@ func newBaselineCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&dir, "dir", "", "path to build output directory (required)")
 	cmd.Flags().StringVar(&outPath, "out", ".bundlespy-baseline.json", "output path for baseline file")
+	cmd.Flags().StringSliceVar(&ext, "ext", nil, "file extensions to include, e.g. --ext .js,.css (default: js,css,images,fonts)")
 	cmd.MarkFlagRequired("dir")
 
 	return cmd
